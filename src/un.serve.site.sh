@@ -16,6 +16,10 @@ UNDERLINE="${ESC}[4m"
 GREEN="${ESC}[32m"
 GREY="${ESC}[38;5;248m"
 
+# IMPORTS
+source "${SCRIPT_DIR}/lib/readFileToArray.sh"
+source "${SCRIPT_DIR}/lib/getDirsInPath.sh"
+
 declare -A CONFIG=(
   [wdsOptions]="--port 3000 --node-resolve --watch"
   [feedback]=false
@@ -31,46 +35,6 @@ declare -A PATHS=(
 )
 declare -a SITES_PARENTS=()
 declare -a SITES=()
-
-function readFileToArray() {
-    local -n result=${1} # array
-    local file=${2}
-    local lines=()
-    local lines
-    local ignoreComments=true
-    local feedback=${CONFIG[feedback]}
-    local funcName=${FUNCNAME[0]}
-
-    if [[ ${feedback} == true ]]; then
-      echo "${GREY}--- ${funcName}()${RESET}"
-    fi
-
-    # Check if the file exists
-    if [[ ! -f "${file}" ]]; then
-        echo "Error: File not found: ${file}"
-        return 1
-    fi
-
-    # Read the file line by line and append to the array
-    while IFS= read -r line; do
-      if [[ ${ignoreComments} == true ]] && [[ "${line}" == \#* ]]; then
-        continue
-      else
-        lines+=("${line}")  # Append the line to the array
-      fi
-    done < "${file}"
-
-    if [[ ${#lines[@]} -gt 0 ]]; then
-        if [[ ${feedback} == true ]]; then
-          echo "Found ${#lines[@]} lines"
-        fi
-        result=("${lines[@]}") # assign
-        return 0
-    else
-        echo "Error: File empty? ${file}"
-        return 1
-    fi
-}
 
 function selectSitesParentDir() {
   local -n result=${1}
@@ -99,31 +63,6 @@ function selectSitesParentDir() {
   else
     result=${sitesParentDir}
     return 0
-  fi
-}
-
-function getDirsInPath() {
-  # <dirs> <path>
-  local -n result=${1}
-  local path=${2}
-  local dirs=()
-  local feedback=${CONFIG[feedback]}
-  local funcName=${FUNCNAME[0]}
-
-  if [[ ${feedback} == true ]]; then
-    echo "--- ${funcName}()"
-  fi
-
-  mapfile dirs < <(find ${path} -maxdepth 1 -mindepth 1 -type d -exec basename {} \;)
-
-  if [[ ${#dirs[@]} -gt 0 ]]; then
-    if [[ ${feedback} == true ]]; then
-      echo "${#dirs[@]} directories found"
-    fi
-    result=("${dirs[@]}")
-    return 0
-  else
-    return 1
   fi
 }
 
